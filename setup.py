@@ -12,7 +12,7 @@ setup(
     name='DermAnno', # パッケージ名(プロジェクト名)
     packages=['derm_anno'], # パッケージ内(プロジェクト内)のパッケージ名をリスト形式で指定
 
-    version='1.0.0', # バージョン
+    version='1.0.3', # バージョン
 
     license='MIT', # ライセンス
 
@@ -23,7 +23,7 @@ setup(
 
     url='https://github.com/kawa-yo/derm_anno', # パッケージに関連するサイトのURL(GitHubなど)
 
-    description='utility library for tiff images created by DermAnnotation. [https://kondoa9.github.io/DermAnnotation/en/]', # パッケージの簡単な説明
+    description='utility library for tiff images created by DermAnnotation.', # パッケージの簡単な説明
     long_description=long_description,
     long_description_content_type='text/markdown', # long_descriptionの形式を'text/plain', 'text/x-rst', 'text/markdown'のいずれかから指定
     keywords='derm_anno DermAnno tiff', # PyPIでの検索用キーワードをスペース区切りで指定
