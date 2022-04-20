@@ -31,7 +31,7 @@ class DermAnnoImage:
                  bg_image: npt.ArrayLike,  # [H, W, C]
                  map_dict: OrderedDict[str, npt.ArrayLike],
                  color_dict: OrderedDict[str, List[int]],
-                ) -> None:
+                 ) -> None:
 
         self.bg_image = bg_image
 
