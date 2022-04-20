@@ -28,7 +28,7 @@ def _tiffFrameGenerator(tiff_image: Image.Image) -> Generator[Image.Image, None,
 
 class DermAnnoImage:
     def __init__(self,
-                 bg_image: npt.ArrayLike,
+                 bg_image: npt.ArrayLike,  # [H, W, C]
                  map_dict: OrderedDict[str, npt.ArrayLike],
                  color_dict: OrderedDict[str, List[int]],
                 ) -> None:

@@ -16,7 +16,7 @@ setup(
 
     license='MIT', # ライセンス
 
-    install_requires=["numpy", "opencv-python", "Pillow"],
+    requires=["numpy", "opencv-python", "Pillow"],
 
     author='kawa-yo', # パッケージ作者の名前
     author_email='yoshito.kawasaki.pub@gmail.com', # パッケージ作者の連絡先メールアドレス
