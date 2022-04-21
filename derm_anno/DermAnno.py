@@ -115,7 +115,7 @@ class DermAnnoImage:
         image_list[0].save(output_file,
                            append_images=image_list[1:],
                            save_all=True,
-                           compression="tiff_lzw",
+                           compression="tiff_adobe_deflate",
                            )
 
         if verbose:
@@ -142,7 +142,7 @@ def load_image(tiff_file: str,
                 ## 285 : "LAYER_NAME/(R, G, B, A)"
                 layer_name, color = tiff_image.tag[285][0].split('/')
                 color = color[1:-1].split(', ')
-                assert layer_name not in map_dict, "duplicate layer name."
+                assert layer_name not in map_dict, f"layer name duplicated: {layer_name}."
                 if verbose:
                     print(f'{i:2d}: Layer name = {layer_name}, Color = {color}')
                 mask = (image[:, :, 3] != 0).astype(np.uint8)
