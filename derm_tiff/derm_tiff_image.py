@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from __future__ import annotations
 
 from collections import OrderedDict
 import time
@@ -43,6 +43,23 @@ class DermTiffImage:
         self.label2mask = label2mask or OrderedDict()
         self.label2color = label2color or OrderedDict()
 
+    @property
+    def shape(self):
+        return self.bg_image.shape
+
+    @property
+    def labels(self) -> List[str]:
+        return list(self.label2mask.keys())
+
+    def resize(self, width: int, height: int) -> DermTiffImage:
+        bg_image = np.array(Image.fromarray(
+            self.bg_image).resize((width, height)))
+        masks = {
+            label: np.array(Image.fromarray(mask).resize((width, height)))
+            for label, mask in self.label2mask.items()
+        }
+        return DermTiffImage(bg_image, masks, self.label2color)
+
     # return (1-alpha) * bg_image
     #      + alpha * annotation
     def get_annotation_image(self,
@@ -51,32 +68,38 @@ class DermTiffImage:
                              ) -> NDArray[Shape["*, *, *"], np.uint8]:
 
         if label_list is None:
-            label_list = list(self.label2mask.keys())
+            label_list = self.labels
 
-        annotation = np.zeros(self.bg_image.shape, np.uint8)
+        assert all([label in self.labels for label in label_list])
+        assert 0 <= alpha <= 1
+
+        annotated_image = np.copy(self.bg_image).astype(float)
 
         for label in label_list:
-            if label not in self.label2mask:
-                continue
-            annotated_area = self.label2mask[label]
-            color = self.label2color[label]
-            annotation[annotated_area] = np.array(color, np.uint8)
+            mask = self.label2mask[label]
+            color = np.array(self.label2color[label], dtype=float)
+            annotated_image[mask] = (1.0 - alpha) * annotated_image[mask] + alpha * color
 
-        annotated_area = np.where(annotation != 0)
-        annotated_image = np.copy(self.bg_image)
-        annotated_image[annotated_area] = np.clip(
-            alpha * annotation[annotated_area] +
-            (1.0 - alpha) * self.bg_image[annotated_area],
+        annotated_image = np.clip(
+            annotated_image,
             a_min=0,
             a_max=255,
-            dtype=np.uint8
-        )
+        ).astype(np.uint8)
 
         return annotated_image
 
+    def remove_frame(self, label: str) -> bool:
+
+        if label not in self.label2mask:
+            return False
+
+        del self.label2mask[label]
+        del self.label2color[label]
+        return True
+
     def add_frame(self,
                   label: str,
-                  mask: NDArray[Shape["*, *, 3"], np.uint8],
+                  mask: NDArray[Shape["*, *"], np.bool_],
                   color: Tuple[np.uint8, np.uint8, np.uint8]
                   ) -> bool:
 
@@ -157,7 +180,7 @@ def load_image(tiff_file: str,
                 assert 285 in tiff_image.tag
                 # 285 : "LABEL/(R, G, B, A)"
                 label, color = tiff_image.tag[285][0].split('/')
-                color = color[1:-1].split(', ')
+                color = color[1:-1].split(',')
                 assert label not in label2mask, f"frame name duplicated: {label}."
 
                 if verbose:
