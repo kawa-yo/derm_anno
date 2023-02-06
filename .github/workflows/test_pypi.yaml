@@ -45,6 +45,7 @@ jobs:
 
     - name: Install from test-pypi
       env:
-        url: https://test.pypi.org/simple/derm_tiff
+        URL: https://test.pypi.org/simple/
+        PACKAGE_NAME: derm_tiff
       run: |
-        python -m pip install --index-url $url
+        python -m pip install --index-url $URL $PACKAGE_NAME
