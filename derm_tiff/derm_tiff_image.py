@@ -12,9 +12,9 @@ from PIL import Image
 from PIL.TiffTags import TAGS
 from PIL.TiffImagePlugin import ImageFileDirectory_v1
 
-from typing import Any, List, Generator, Optional, Tuple
+from typing import Any, List, Generator, Tuple
 
-from derm_tiff.io import make_parent_dir
+from .io import make_parent_dir
 
 
 def _tiffFrameGenerator(tiff_image: Image.Image,
@@ -28,7 +28,7 @@ class DermTiffImage:
     def __init__(self,
                  bg_image: NDArray[Shape["*, *, 3"], np.uint8],  # [H, W, C]
                  label2mask: OrderedDict[str,
-                                         NDArray[Shape["*, *"], bool]] = None,
+                                         NDArray[Shape["*, *"], np.bool_]] = None,
                  label2color: OrderedDict[str,
                                           Tuple[np.uint8, np.uint8, np.uint8]] = None,
                  ) -> None:
@@ -36,7 +36,7 @@ class DermTiffImage:
         assert label2color.keys() == label2mask.keys()
         assert isinstance(bg_image, NDArray[Shape["*, *, 3"], np.uint8])
         for mask in label2mask.values():
-            assert isinstance(mask, NDArray[Shape["*, *"], bool])
+            assert isinstance(mask, NDArray[Shape["*, *"], np.bool_])
 
         self.bg_image = bg_image
 
@@ -48,7 +48,7 @@ class DermTiffImage:
     def get_annotation_image(self,
                              label_list: List[str] = None,
                              alpha: float = 1.0,
-                             ) -> NDArray[Shape["*, *, *"], int]:
+                             ) -> NDArray[Shape["*, *, *"], np.uint8]:
 
         if label_list is None:
             label_list = list(self.label2mask.keys())
