@@ -7,7 +7,7 @@ on:
       - master
 
 jobs:
-  deploy:
+  upload_to_pypi:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -29,7 +29,8 @@ jobs:
       run: |
         poetry publish --build --username $TWINE_USERNAME --password $TWINE_PASSWORD
 
-  download_pypi:
+  download_from_pypi:
+    needs: upload_to_pypi
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
