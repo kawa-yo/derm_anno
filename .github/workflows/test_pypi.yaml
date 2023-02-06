@@ -21,10 +21,13 @@ jobs:
 
     - name: Build and publish
       env:
+        TEST_PYPI_URL: https://test.pypi.org/legacy/
+        REPO: test-pypi
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        poetry publish -r test-pypi --build --username $TWINE_USERNAME --password $TWINE_PASSWORD
+        poetry config repositories.$REPO -pypi $TEST_PYPI_URL
+        poetry publish -r $REPO --build --username $TWINE_USERNAME --password $TWINE_PASSWORD
 
   download_pypi:
     runs-on: ubuntu-latest
