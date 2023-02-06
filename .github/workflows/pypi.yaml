@@ -45,6 +45,6 @@ jobs:
 
     - name: Install from test-pypi
       env:
-        package_name: derm_tiff
+        PACKAGE_NAME: derm_tiff
       run: |
-        pip install $package_name
+        pip install $PACKAGE_NAME
