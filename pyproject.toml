@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "derm_tiff"
 version = "0.1.1"
-description = "utilities for tiff images created by DermAnnotation"
+description = "Utilities for tiff images created by DermAnnotation"
 authors = ["kawa-yo <yoshito.kawasaki.pub@gmail.com>"]
 readme = "README.md"
 
