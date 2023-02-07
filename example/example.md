@@ -14,6 +14,7 @@ print(labels)  # ['Pencil1', 'Pencil2', 'Pencil3']
 ```py
 for label in labels:
     img = derm_image.get_annotation_image([label], alpha=0.5)
+    Image.fromarray(img).show()
 ```
 ![Pencil1](imgs/with_Pencil1.png)![Pencil2](imgs/with_Pencil2.png)![Pencil3](imgs/with_Pencil3.png)
 
