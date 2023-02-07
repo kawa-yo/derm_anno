@@ -7,3 +7,7 @@ venv/
 build/
 dist/
 DermAnno.egg-info
+
+raw.tiff
+*.tiff
+*.png

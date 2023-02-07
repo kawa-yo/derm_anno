@@ -54,7 +54,7 @@ class DermTiffImage:
     def get_annotation_image(self,
                              label_list: List[str] = None,
                              alpha: float = 1.0,
-                             ) -> NDArray[Shape["*, *, *"], np.uint8]:
+                             ) -> Image.Image:
 
         if label_list is None:
             label_list = self.labels
@@ -76,7 +76,7 @@ class DermTiffImage:
             a_max=255,
         ).astype(np.uint8)
 
-        return annotated_image
+        return Image.fromarray(annotated_image)
 
     def remove_frame(self, label: str) -> bool:
 
