@@ -3,25 +3,14 @@ from __future__ import annotations
 
 from collections import OrderedDict
 import time
-import os
-
-import cv2
 import numpy as np
-from nptyping import NDArray, Shape
 from PIL import Image
-from PIL.TiffTags import TAGS
 from PIL.TiffImagePlugin import ImageFileDirectory_v1
 
 from typing import Any, List, Generator, Tuple
+from nptyping import NDArray, Shape
 
 from .io import make_parent_dir
-
-
-def _tiffFrameGenerator(tiff_image: Image.Image,
-                        ) -> Generator[Image.Image, None, None]:
-    for i in range(tiff_image.n_frames):
-        tiff_image.seek(i)
-        yield tiff_image
 
 
 class DermTiffImage:
@@ -65,7 +54,7 @@ class DermTiffImage:
     def get_annotation_image(self,
                              label_list: List[str] = None,
                              alpha: float = 1.0,
-                             ) -> NDArray[Shape["*, *, *"], np.uint8]:
+                             ) -> Image.Image:
 
         if label_list is None:
             label_list = self.labels
@@ -78,7 +67,8 @@ class DermTiffImage:
         for label in label_list:
             mask = self.label2mask[label]
             color = np.array(self.label2color[label], dtype=float)
-            annotated_image[mask] = (1.0 - alpha) * annotated_image[mask] + alpha * color
+            annotated_image[mask] = (1.0 - alpha) * \
+                annotated_image[mask] + alpha * color
 
         annotated_image = np.clip(
             annotated_image,
@@ -86,7 +76,7 @@ class DermTiffImage:
             a_max=255,
         ).astype(np.uint8)
 
-        return annotated_image
+        return Image.fromarray(annotated_image)
 
     def remove_frame(self, label: str) -> bool:
 
@@ -121,29 +111,27 @@ class DermTiffImage:
 
         _start_time = time.time()
 
-        array = cv2.cvtColor(self.bg_image, cv2.COLOR_BGR2RGBA)
-        array[:, :, 3] = 255
-        bg_image = Image.fromarray(array)
+        rgb_array = np.array(self.bg_image)
+        H, W, _ = rgb_array.shape
+        alpha = 255 * np.ones((H, W, 1), np.uint8)
+        bg_image = Image.fromarray(np.concatenate([rgb_array, alpha], axis=2))
 
         frame_list = []
-        for label, mask in self.label2mask.items():
-            H, W = mask.shape
+        for label in self.labels:
             color = self.label2color[label]
+            mask = self.label2mask[label]
 
-            # BGR array
-            array = 255 * np.ones([H, W, 3], dtype=np.uint8)
-            array[mask] = np.array(color, np.uint8)
+            R, G, B = color
 
-            # RGBA array
-            array = cv2.cvtColor(array, cv2.COLOR_BGR2RGBA)
-            array[:, :, 3] = 255 * mask.astype(np.uint8)
+            rgba = np.array((R, G, B, 255), np.uint8)
+            rgba_array = np.zeros([H, W, 4], np.uint8)
+            rgba_array[mask] = rgba
 
             # Image
-            image = Image.fromarray(array)
-            B, G, R = color
+            image = Image.fromarray(rgba_array)
 
             tiffinfo = ImageFileDirectory_v1()
-            tiffinfo[285] = f'{label}/({R}, {G}, {B}, 255)'.encode("utf-8")
+            tiffinfo[285] = f'{label}/({R},{G},{B},255)'.encode("utf-8")
             image.tag = tiffinfo
 
             frame_list.append(image)
@@ -162,6 +150,13 @@ class DermTiffImage:
             print('Elapsed time: {:.1f} [s]'.format(_elapsed_time))
 
 
+def _tiffFrameGenerator(tiff_image: Image.Image,
+                        ) -> Generator[Image.Image, None, None]:
+    for i in range(tiff_image.n_frames):
+        tiff_image.seek(i)
+        yield tiff_image
+
+
 def load_image(tiff_file: str,
                verbose: bool = False,
                ) -> DermTiffImage:
@@ -171,24 +166,23 @@ def load_image(tiff_file: str,
 
     with Image.open(tiff_file) as tiff_image:
         for i, frame in enumerate(_tiffFrameGenerator(tiff_image)):
-
             frame = np.array(frame, np.uint8)
             if i == 0:
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
+                frame = frame[:, :, :3]  # RGBA to RGB
                 bg_image = frame
             else:
                 assert 285 in tiff_image.tag
-                # 285 : "LABEL/(R, G, B, A)"
+                # 285 : "LABEL/(R,G,B,A)"
                 label, color = tiff_image.tag[285][0].split('/')
                 color = color[1:-1].split(',')
                 assert label not in label2mask, f"frame name duplicated: {label}."
 
-                if verbose:
-                    print(f'{i:2d}: Frame name = {label}, Color = {color}')
-
                 R, G, B, _ = map(int, color)
                 label2mask[label] = frame[:, :, 3] != 0
-                label2color[label] = (B, G, R)
+                label2color[label] = (R, G, B)
+
+                if verbose:
+                    print(f'{i:2d}: Frame name = {label}, Color = {color}')
 
     return DermTiffImage(bg_image,
                          label2mask,

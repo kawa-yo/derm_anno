@@ -16,7 +16,7 @@ def main():
     # TIFF画像の各フレームのマスクを合成して出力
     for label in labels:
         img = derm_image.get_annotation_image([label], alpha=0.5)
-        Image.fromarray(img).save(f"example/imgs/with_{label}.png")
+        img.save(f"example/imgs/with_{label}.png")
 
     # どのフレームのマスクとも重複しないようなマスクを新たに追加する
     H, W, _ = derm_image.shape
@@ -31,7 +31,7 @@ def main():
     derm_image.add_frame("empty_space", new_mask, color)
 
     img = derm_image.get_annotation_image(["empty_space"], alpha=0.5)
-    Image.fromarray(img).save("example/imgs/with_empty_space.png")
+    img.save("example/imgs/with_empty_space.png")
 
     # DermAnnotationで開けるTIFF形式で保存
     derm_image.save("example/imgs/output.tiff")
