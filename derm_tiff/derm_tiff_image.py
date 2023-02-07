@@ -3,16 +3,12 @@ from __future__ import annotations
 
 from collections import OrderedDict
 import time
-import os
-
-import cv2
 import numpy as np
-from nptyping import NDArray, Shape
 from PIL import Image
-from PIL.TiffTags import TAGS
 from PIL.TiffImagePlugin import ImageFileDirectory_v1
 
 from typing import Any, List, Generator, Tuple
+from nptyping import NDArray, Shape
 
 from .io import make_parent_dir
 
@@ -115,27 +111,24 @@ class DermTiffImage:
 
         _start_time = time.time()
 
-        array = cv2.cvtColor(self.bg_image, cv2.COLOR_RGB2RGBA)
-        array[:, :, 3] = 255
-        bg_image = Image.fromarray(array)
+        rgb_array = np.array(self.bg_image)
+        H, W, _ = rgb_array.shape
+        alpha = 255 * np.ones((H, W, 1), np.uint8)
+        bg_image = Image.fromarray(np.concatenate([rgb_array, alpha], axis=2))
 
         frame_list = []
         for label in self.labels:
             color = self.label2color[label]
             mask = self.label2mask[label]
 
-            # RGBarray
-            H, W = mask.shape
-            array = 255 * np.ones([H, W, 3], dtype=np.uint8)
-            array[mask] = np.array(color, np.uint8)
+            R, G, B = color
 
-            # RGBA array
-            array = cv2.cvtColor(array, cv2.COLOR_RGB2RGBA)
-            array[:, :, 3] = 255 * mask.astype(np.uint8)
+            rgba = np.array((R, G, B, 255), np.uint8)
+            rgba_array = np.zeros([H, W, 4], np.uint8)
+            rgba_array[mask] = rgba
 
             # Image
-            image = Image.fromarray(array)
-            R, G, B = color
+            image = Image.fromarray(rgba_array)
 
             tiffinfo = ImageFileDirectory_v1()
             tiffinfo[285] = f'{label}/({R},{G},{B},255)'.encode("utf-8")
@@ -175,7 +168,7 @@ def load_image(tiff_file: str,
         for i, frame in enumerate(_tiffFrameGenerator(tiff_image)):
             frame = np.array(frame, np.uint8)
             if i == 0:
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)
+                frame = frame[:, :, :3]  # RGBA to RGB
                 bg_image = frame
             else:
                 assert 285 in tiff_image.tag

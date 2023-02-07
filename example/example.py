@@ -5,10 +5,6 @@ import numpy as np
 
 
 def main():
-    derm_image = load_image("example/imgs/raw.tiff")
-    derm_image = derm_image.resize(600, 400)
-    derm_image.save("example/imgs/input.tiff")
-
     # DermAnnotationで作成されたTIFF画像を開く
     derm_image = load_image("example/imgs/input.tiff")
 
